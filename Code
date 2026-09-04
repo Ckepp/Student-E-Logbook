@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Center E-Logbook</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #2980b9;
+            --danger-color: #e74c3c;
+            --background-color: #f4f6f7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Functional PNG Styling */
+        .header-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-bottom: 3px solid var(--accent-color);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+
+        .header-section img {
+            max-height: 120px; /* Constrains height so it doesn't overwhelm the page */
+            width: auto;       /* Maintains aspect ratio */
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        h1.main-title {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 14px;
+        }
+
+        td input[type="text"], 
+        td input[type="time"], 
+        td input[type="date"] {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+
+        td input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .hours-col {
+            text-align: center;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .actions-col {
+            text-align: center;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-add { background-color: var(--accent-color); }
+        .btn-add:hover { background-color: #3498db; }
+        
+        .btn-delete { background-color: var(--danger-color); padding: 5px 10px; }
+        .btn-delete:hover { background-color: #c0392b; }
+        
+        .btn-print { background-color: #7f8c8d; }
+        .btn-print:hover { background-color: #95a5a6; }
+
+        .footer-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            button, .actions-col { display: none; }
+            td input { border: none; background: transparent; }
+            .header-section { border-bottom: 2px solid black; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Logo and Title Integrated Here -->
+        <div class="header-section">
+            <img src="ENC ASSETS.png" alt="Every Nation Campus Logo">
+            <h1 class="main-title">Student Center E-Logbook</h1>
+        </div>
+
+        <table id="logbookTable">
+            <thead>
+                <tr>
+                    <th width="9%">Date</th>
+                    <th width="15%">Student Name</th>
+                    <th width="10%">Student ID</th>
+                    <th width="12%">Course / Grade</th>
+                    <th width="8%">Time In</th>
+                    <th width="8%">Time Out</th>
+                    <th width="6%">Hours</th>
+                    <th width="26%">Activity / Task</th>
+                    <th width="6%" class="actions-col">Act</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Rows injected by JS -->
+            </tbody>
+        </table>
+
+        <div class="footer-controls">
+            <div>
+                <button class="btn-add" onclick="addRow()">+ Add Student Entry</button>
+                <button class="btn-delete" onclick="clearAllData()" style="margin-left: 10px;">Clear All Data</button>
+            </div>
+            <div>
+                <button class="btn-print" onclick="window.print()">Print to PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let entries = [];
+
+        function init() {
+            const savedData = localStorage.getItem('multiStudentLogbook');
+            if (savedData) {
+                entries = JSON.parse(savedData);
+            } else {
+                entries = [{ date: '', name: '', studentId: '', course: '', timeIn: '', timeOut: '', activity: '' }];
+            }
+            renderTable();
+        }
+
+        function addRow() {
+            entries.push({ date: '', name: '', studentId: '', course: '', timeIn: '', timeOut: '', activity: '' });
+            saveData();
+            renderTable();
+        }
+
+        function deleteRow(index) {
+            if (confirm("Delete this entry?")) {
+                entries.splice(index, 1);
+                if (entries.length === 0) {
+                    entries.push({ date: '', name: '', studentId: '', course: '', timeIn: '', timeOut: '', activity: '' });
+                }
+                saveData();
+                renderTable();
+            }
+        }
+
+        function updateEntry(index, field, value) {
+            entries[index][field] = value;
+            saveData();
+            if (field === 'timeIn' || field === 'timeOut') {
+                renderTable(); 
+            }
+        }
+
+        function calculateHours(timeIn, timeOut) {
+            if (!timeIn || !timeOut) return 0;
+            const start = new Date(`1970-01-01T${timeIn}`);
+            const end = new Date(`1970-01-01T${timeOut}`);
+            let diff = (end - start) / (1000 * 60 * 60);
+            if (diff < 0) diff += 24; 
+            return diff;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            entries.forEach((entry, index) => {
+                const hours = calculateHours(entry.timeIn, entry.timeOut);
+                const tr = document.createElement('tr');
+                
+                tr.innerHTML = `
+                    <td><input type="date" value="${entry.date}" onchange="updateEntry(${index}, 'date', this.value)"></td>
+                    <td><input type="text" placeholder="Full Name" value="${entry.name}" oninput="updateEntry(${index}, 'name', this.value)"></td>
+                    <td><input type="text" placeholder="ID Number" value="${entry.studentId}" oninput="updateEntry(${index}, 'studentId', this.value)"></td>
+                    <td><input type="text" placeholder="Course/Grade" value="${entry.course}" oninput="updateEntry(${index}, 'course', this.value)"></td>
+                    <td><input type="time" value="${entry.timeIn}" onchange="updateEntry(${index}, 'timeIn', this.value)"></td>
+                    <td><input type="time" value="${entry.timeOut}" onchange="updateEntry(${index}, 'timeOut', this.value)"></td>
+                    <td class="hours-col">${hours > 0 ? hours.toFixed(1) : '-'}</td>
+                    <td><input type="text" placeholder="Task..." value="${entry.activity}" oninput="updateEntry(${index}, 'activity', this.value)"></td>
+                    <td class="actions-col"><button class="btn-delete" onclick="deleteRow(${index})">X</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('multiStudentLogbook', JSON.stringify(entries));
+        }
+
+        function clearAllData() {
+            if (confirm("WARNING: Delete all entries?")) {
+                localStorage.removeItem('multiStudentLogbook');
+                entries = [];
+                init();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
